@@ -1,0 +1,101 @@
+# Agent registry — single source of truth for agent metadata.
+#
+# This file drives scripts/generate_agents.py, which reads each agent's
+# prompt body from prompts/<id>.md and writes tool-specific agent files
+# into .claude/agents/.
+#
+# To add a new agent: write prompts/<id>.md, add an entry here, run
+# `python3 scripts/generate_agents.py`, commit everything.
+#
+# tools: which capabilities the agent gets. Kept minimal on purpose —
+# these are analysis/reporting agents, not code-modifying agents.
+#   read  -> read files
+#   grep  -> search file contents
+#   glob  -> find files by pattern
+#   bash  -> run shell commands (git log/diff, log parsing, test running)
+#   write -> write output files
+#   edit  -> NEVER enabled here. No agent in this pipeline edits source code.
+
+agents:
+  - id: context-analyzer
+    description: >-
+      Analyzes a project codebase and produces context.md capturing architecture,
+      tech stack, key modules, integration points, and conventions. Use once when
+      onboarding this pipeline to a new project, and re-run after major structural
+      changes.
+    tools: [read, grep, glob, bash, write]
+
+  - id: changelog-analyzer
+    description: >-
+      Analyzes a changelog, git diff, or set of commits for a new release and
+      extracts the recent changes into changes.md. Use whenever a new release
+      or build is being prepared for testing.
+    tools: [read, grep, glob, bash, write]
+
+  - id: requirements-analyzer
+    description: >-
+      Optional agent. Extracts requirement/acceptance-criteria items tagged with
+      their CR/requirement ID from an SRS or CR document, cross-references them
+      against changes.md, and flags mismatches against code-scan.md's discovered
+      business rules if that stage has run. Seeds the Requirement Traceability
+      Matrix (rtm.md/rtm.csv) for the run. Use when a requirements/CR document is
+      available for this release; skips itself plainly if not.
+    tools: [read, grep, glob, write]
+
+  - id: code-scanner
+    description: >-
+      Reviews only the changed code recorded in a run's changes.md for logic
+      bugs, weak error handling, security concerns, convention violations, and
+      leftover debug code, and extracts business rules, validations, feature
+      flags, and integration points into plain user-facing language for QA.
+      Advisory only — findings feed test-planner's risk rating and
+      requirements-analyzer's mismatch detection; does not block the pipeline.
+      Use after changelog-analyzer.
+    tools: [read, grep, glob, bash, write]
+
+  - id: test-planner
+    description: >-
+      Analyzes changes.md against context.md to identify impacted areas
+      (direct and ripple/regression impact) and produces a thorough test-plan.md.
+      Use after changelog-analyzer, before writing test cases.
+    tools: [read, grep, glob, bash, write]
+
+  - id: test-case-writer
+    description: >-
+      Converts an approved test-plan.md into detailed manual test cases, each
+      tagged with Origin (requirement- vs. implementation-based), Category
+      (functional/regression/boundary/negative/security/accessibility), and
+      Automation Candidate for fast review; updates the run's RTM; and writes
+      a coverage-matrix.md (scope area x category counts, with gaps flagged
+      against the test plan's stated scope). Use after the test plan has been
+      reviewed and approved by a human.
+    tools: [read, grep, glob, write]
+
+  - id: log-analyzer
+    description: >-
+      Analyzes application, server, or test execution logs to surface errors,
+      anomalies, and patterns, producing log-analysis.md. Use during test
+      execution or when investigating unexpected behavior.
+    tools: [read, grep, glob, bash, write]
+
+  - id: rca-analyst
+    description: >-
+      Performs root cause analysis on a reported defect using code, logs, and
+      recent changes as evidence, producing a structured RCA report. Use after
+      a bug is found and before filing the formal bug report.
+    tools: [read, grep, glob, bash, write]
+
+  - id: bug-reporter
+    description: >-
+      Writes a bug report strictly following the user-supplied template in
+      templates/bug-report.template.md, using the RCA report and test case
+      as source evidence, and updates the run's RTM with the new defect ID.
+      Use after rca-analyst has completed its analysis.
+    tools: [read, grep, glob, write]
+
+  - id: release-notes-writer
+    description: >-
+      Prepares the test closure report and release notes at the end of a test
+      cycle, summarizing scope, results, defects, risks, and changes delivered.
+      Use once testing for a release is complete.
+    tools: [read, grep, glob, bash, write]

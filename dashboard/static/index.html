@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QA Agent Pipeline</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="brand-mark">🧪</span>
+      <div>
+        <h1>QA Agent Pipeline</h1>
+        <p class="tagline">Run agents, watch them work, review the output</p>
+      </div>
+    </div>
+    <div class="run-id-field">
+      <label for="run-id">Run folder</label>
+      <input id="run-id" type="text" placeholder="today's date, e.g. 2026-08-24-rc2" />
+    </div>
+  </header>
+
+  <div class="workspace">
+    <section class="col agents-col">
+      <h2><span class="dot"></span>Agents</h2>
+      <div id="agent-list"></div>
+
+      <h2><span class="dot"></span>Full Pipeline</h2>
+      <div class="card pipeline-card">
+        <label for="stages">Stages</label>
+        <input id="stages" type="text" placeholder="context changelog test-plan" />
+        <p class="hint">Space-separated. Leave blank for the default chain.</p>
+        <button id="run-pipeline" class="btn-primary">▶ Run Pipeline</button>
+      </div>
+    </section>
+
+    <section class="col output-col">
+      <div class="output-col-header">
+        <h2><span class="dot"></span>Output Browser</h2>
+        <p class="output-path" id="output-path-label">resolving save location…</p>
+        <div id="approve-banner" class="banner hidden"></div>
+      </div>
+      <div class="output-body">
+        <div id="output-tree"></div>
+        <div id="output-view">
+          <p class="empty-state">Select a file on the left to preview it here.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="log-drawer">
+    <div class="log-drawer-header">
+      <h2><span class="dot"></span>Live Log</h2>
+      <div class="log-header-right">
+        <label class="toggle"><input type="checkbox" id="toggle-debug" /> show technical details</label>
+        <span id="job-status" class="badge idle">idle</span>
+      </div>
+    </div>
+    <div class="log-drawer-body">
+      <div id="log-pane"></div>
+      <div class="runs-panel">
+        <h3>Runs</h3>
+        <div id="runs-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

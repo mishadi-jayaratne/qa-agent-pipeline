@@ -1,0 +1,11 @@
+# Command registry — same pattern as config/agents.yaml, for slash commands rather than
+# subagents. Generated into .claude/commands/ by scripts/generate_agents.py, from the
+# shared prompt body in prompts/commands/<id>.md.
+
+commands:
+  - id: qa-pipeline
+    description: >-
+      Run a sequence of QA pipeline stages in one go, invoking each stage's subagent in
+      order. Stops automatically before test-cases if it was chained right after test-plan,
+      since the test plan needs human review first.
+    argument_hint: "[stage stage ...]  e.g. context changelog requirements code-scan test-plan"

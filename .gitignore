@@ -1,0 +1,10 @@
+# Per-project generated output — this pipeline is meant to be reused across projects,
+# so the artifacts it produces for any one project shouldn't be committed to the pipeline repo.
+output/*
+!output/.gitkeep
+!output/test-cases/.gitkeep
+!output/rca/.gitkeep
+!output/bugs/.gitkeep
+
+# If you cloned this pipeline INSIDE a project repo and want output/ committed as part of
+# that project's own history instead, delete this .gitignore (or the output/ rule above).

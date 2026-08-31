@@ -1,0 +1,40 @@
+# QA Agent Pipeline — output configuration
+#
+# Controls where agents write generated artifacts, relative to the project root the
+# pipeline is invoked from. Every agent reads this file first (see the "Output Location"
+# section at the top of each prompt in prompts/) and falls back to these same defaults
+# if this file is missing, so deleting it is safe — it just resets you to defaults.
+
+output_dir: output
+runs_subdir: runs
+run_id: null   # unset -> agents default to today's date (YYYY-MM-DD); set explicitly (e.g. a
+               # release tag or CR number) to keep concurrent cycles cleanly separated
+
+# Optional inputs some agents look for. All may be left null and provided ad hoc by the user
+# in conversation instead — these just save asking every time.
+inputs:
+  requirements_docs: null    # path/glob to SRS/CR doc(s), read by requirements-analyzer
+  logs_dir: null              # default directory log-analyzer looks in if none specified
+  bug_template: templates/bug-report.template.md
+
+# File/folder names within a run. Rarely need to change these — mainly here so a team can
+# rename to match existing conventions without editing every agent prompt. All paths below
+# resolve under <output_dir>/<runs_subdir>/<run_id>/ EXCEPT `context`, which lives directly
+# under <output_dir>/ — it's refreshed in place across runs, not versioned per cycle.
+paths:
+  context: context.md
+  changes: changes.md
+  requirements: requirements.md
+  rtm: rtm.md
+  rtm_csv: rtm.csv
+  code_scan: code-scan.md
+  test_plan: test-plan.md
+  test_plan_csv: test-plan.csv
+  test_cases_dir: test-cases
+  test_cases_csv: test-cases.csv
+  coverage_matrix: coverage-matrix.md
+  log_analysis: log-analysis.md
+  rca_dir: rca
+  bugs_dir: bugs
+  test_closure_report: test-closure-report.md
+  release_notes: release-notes.md
