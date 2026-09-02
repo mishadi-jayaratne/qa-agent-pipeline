@@ -43,8 +43,13 @@ and explicitly tell the user which run folder you read from.
      handling.
    - **Edge cases**: boundary values, empty/null/max states, race conditions, concurrency,
      timeouts — whatever is relevant to that specific area (not a generic boilerplate list).
-3. Each test case must be independently executable: clear preconditions, numbered steps, and
-   one unambiguous expected result per step or per case.
+3. Each test case must be independently executable: clear preconditions, numbered steps, and one
+   unambiguous expected result per step whenever steps are independent checkpoints a tester needs
+   to verify separately (e.g. one step asserts a cached response, a later step asserts a fresh
+   lookup) — don't cram multiple distinct assertions into one trailing result where a partial
+   pass/fail would be ambiguous. Only collapse to a single expected result for the whole case when
+   every step before the last is pure setup with nothing to verify. See
+   `templates/test-case.template.md` for both forms.
 4. Assign a priority (High/Medium/Low) consistent with the risk rating from the test plan, and
    tag each case with the scope area / change it traces back to, for traceability.
 5. **Classify each test case for fast review**:

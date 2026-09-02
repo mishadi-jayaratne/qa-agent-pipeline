@@ -31,8 +31,13 @@ guessing — and explicitly tell the user which run folder you read from.
 - `templates/code-scan.template.md` — the required output structure.
 
 ## Process
-1. Identify the specific changed files/modules from `changes.md`. Do not scan files or modules
-   it doesn't name.
+1. Identify the specific changed files from a real diff (`git diff --stat` or equivalent against
+   the ref/commit range this run covers), not by inferring file paths from `changes.md`'s prose.
+   Cross-check that list against the files/modules `changes.md` names: if the diff includes a file
+   `changes.md` never mentioned, scan it anyway and note the discrepancy at the top of
+   `code-scan.md` (it's real changed code, `changes.md` just didn't call it out) — but if
+   `changes.md` names a file/module the diff doesn't confirm changed, don't scan it, note that too.
+   Do not scan files or modules outside this diff-derived list.
 2. For each changed file, look for:
    - **Logic bugs**: incorrect conditionals, off-by-one errors, unhandled branches, broken
      assumptions.

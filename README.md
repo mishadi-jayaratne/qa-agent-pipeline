@@ -1,8 +1,22 @@
 # QA Agent Pipeline
 
-A project-agnostic set of QA agents for Claude Code, covering the workflow from
-"new codebase" through "release closed and notes shipped." Clone it into any project and use it
-as-is — no project-specific setup beyond dropping in your bug report template.
+A project-agnostic set of QA agents for [Claude Code](https://docs.claude.com/en/docs/claude-code),
+covering the workflow from "new codebase" through "release closed and notes shipped." Clone it
+into any project and use it as-is — no project-specific setup beyond dropping in your bug report
+template.
+
+This README is written for someone using Claude Code and this pipeline for the first time. If
+you already know Claude Code well, skip to [Getting started](#getting-started).
+
+## What this actually is
+
+It's a folder of **prompts** (plain instructions, one per QA task — "analyze this codebase",
+"write test cases from this plan", etc.) plus a small script that turns those prompts into
+Claude Code subagents. You open Claude Code in your project, and instead of typing a long
+explanation every time you want QA work done, you just say "use the test-planner agent" and it
+follows the pre-written instructions, reading and writing files in an `output/` folder as it
+goes. Nothing here edits your source code — every agent only reads your code and writes
+Markdown/CSV reports.
 
 ## Why this exists
 
@@ -27,22 +41,88 @@ not one giant agent trying to do everything.
 
 ## Requirements
 
-- [Claude Code](https://docs.claude.com/en/docs/claude-code).
+- **[Claude Code](https://docs.claude.com/en/docs/claude-code)** installed and logged in. If you
+  can run `claude` in a terminal and it opens a chat, you're set. If not, follow the install
+  instructions at that link first — this README assumes Claude Code already works.
+- **git**, to clone this repo.
 - Nothing else, for day-to-day use. `pyyaml` is only needed if you edit `prompts/` or
   `config/agents.yaml` and want to regenerate the agent files (`pip install pyyaml`).
 
-## Getting started
+## Quick start (absolute beginner path)
 
-1. Clone this repo into (or alongside) the project you want to test. If your target project is
-   a separate repo, copy `.claude/`, `templates/`, and `output/` into it — or open Claude Code in
-   your project directory and point it at this repo's `prompts/` and `templates/` via a relative
-   path. Simplest: clone this repo *inside* the project repo (e.g. as `qa-pipeline/`) or as a
-   sibling directory and `cd` into the project when invoking agents.
-2. **Replace the bug report template.** `templates/bug-report.template.md` ships as a generic
-   placeholder. Swap in your team's real template (Jira fields, internal tracker format,
-   whatever you actually file against) before using `bug-reporter`.
-3. Open Claude Code in your project.
-4. Invoke agents explicitly, in order, reviewing output between stages (see workflow below).
+These are the exact commands to go from nothing to running your first agent. Run them in a
+terminal.
+
+```bash
+# 1. Go to (or next to) the project you want to QA, and clone this repo there.
+#    Easiest option: clone it *inside* your project as a subfolder called qa-pipeline.
+cd /path/to/your-project
+git clone <this-repo-url> qa-pipeline
+cd qa-pipeline
+
+# 2. Replace the bug report template with your team's real one (Jira fields, internal
+#    tracker format, whatever you actually file bugs against). It ships with a generic
+#    placeholder in templates/bug-report.template.md — edit that file directly.
+
+# 3. Start Claude Code in this folder.
+claude
+
+# 4. Inside the Claude Code chat, confirm the agents are available:
+/agents
+
+# 5. Run your first agent — this one builds a knowledge file about the codebase you're
+#    testing and only needs to be run once (re-run later only after major structural changes).
+Use the context-analyzer agent to analyze this codebase.
+```
+
+That's it — step 5 writes `output/context.md`. From here, follow the
+[Typical workflow](#typical-workflow) below for a full release cycle. Everything past this point
+in the README explains what each agent does and how to configure things, but the five commands
+above are all you need to get moving.
+
+**If your target project is a separate repo from this pipeline** (you don't want to clone
+`qa-pipeline` inside it), open Claude Code in your project directory instead, and copy
+`.claude/`, `templates/`, and `output/` from this repo into it — or just reference this repo's
+`prompts/` and `templates/` via a relative path when you invoke agents. Simplest is still to
+clone this repo as a sibling directory and `cd` into your project when starting `claude`.
+
+## Optional — GitLab push setup
+
+Skip this whole section if you only want local Markdown drafts of bugs/release notes — nothing
+else in this pipeline needs GitLab access. Come back to it later if you decide you want
+`gitlab-publisher` to file things directly to GitLab.
+
+```bash
+# 1. Install the GitLab MCP server globally (this repo's .mcp.json points at the globally
+#    installed binary rather than `npx ...@latest`, since npx's own console noise —
+#    update-notifier banners, first-run download progress — can print to stdout and corrupt
+#    the JSON-RPC stream the MCP protocol expects there, causing a "Connection closed" error).
+npm install -g @zereight/mcp-gitlab
+
+# 2. Copy the env template and fill in your own values.
+cp .env.example .env
+```
+
+Then edit `.env` and set:
+- `GITLAB_PERSONAL_ACCESS_TOKEN` — a **personal** token (Settings > Access Tokens on GitLab),
+  scope `api`. Bugs/releases get filed as *you*, not a shared bot — each teammate sets their
+  own. Grant it only Wiki and Work Item/Issue create+read abilities, nothing under Repository.
+- `GITLAB_API_URL` — e.g. `https://gitlab.com/api/v4` (GitLab SaaS) or
+  `https://gitlab.your-company.com/api/v4` (self-managed).
+
+```bash
+# 3. Point the pipeline at your GitLab project — edit config/pipeline.config.yaml and set
+#    gitlab.project to your project path, e.g. "group/subgroup/project".
+```
+
+```bash
+# 4. Start (or restart) Claude Code in this folder, then inside the chat run:
+/mcp
+```
+The first time Claude Code sees `gitlab` in this project's `.mcp.json`, it shows a one-time
+trust-approval prompt — accept it, or the server won't load and `/mcp` will show it as
+unavailable with no other error. Confirm `/mcp` shows `gitlab` as connected before relying on
+`gitlab-publisher`.
 
 ## Configuration
 
@@ -76,7 +156,7 @@ Open Claude Code in your project directory (`claude`), then either:
 
 Agent names: `context-analyzer`, `changelog-analyzer`, `requirements-analyzer`, `code-scanner`,
 `test-planner`, `test-case-writer`, `log-analyzer`, `rca-analyst`, `bug-reporter`,
-`release-notes-writer`.
+`release-notes-writer`, `gitlab-publisher`.
 
 ## Running a pipeline (orchestrator)
 
@@ -119,9 +199,23 @@ from the source file at `prompts/commands/qa-pipeline.md`.
 | 8 | `rca-analyst` | bug symptom, code, logs, `changes.md` | `output/rca/*.md` |
 | 9 | `bug-reporter` | RCA, test case, your template | `output/bugs/*.md`, updates `output/rtm.md`\* |
 | 10 | `release-notes-writer` | everything above | `output/test-closure-report.md`, `output/release-notes.md` |
+| — | `gitlab-publisher` *(optional, on demand)* | one drafted bug or release notes doc | GitLab issue or wiki page; updates that same local draft with the resulting URL |
 
 \* read/updated only if present for the run — these are optional stages/artifacts and later
 agents degrade gracefully (stating so explicitly) when they weren't run.
+
+**Pushing to GitLab.** `bug-reporter` and `release-notes-writer` only ever write local
+Markdown — neither has GitLab access. To actually file something, review the draft, then run
+`/push-bug <slug>` or `/push-release-notes <version>` (e.g. `/push-release-notes 3.0.68-DA`).
+Each is a single, explicit push of one item, handled by `gitlab-publisher` — the only agent with
+GitLab access, and it's scoped to issues and wiki pages only (`GITLAB_TOOLSETS=wiki,issues` in
+`.mcp.json`, via the [zereight/gitlab-mcp](https://github.com/zereight/gitlab-mcp) server — used
+instead of GitLab's official MCP server since that requires a GitLab Duo license). It never
+reads source code or repository files, and never pushes anything you didn't name explicitly.
+A successful push writes the resulting GitLab URL back into the local draft, so re-running the
+same push is recognized as already-done instead of filing a duplicate. See
+[Optional — GitLab push setup](#optional--gitlab-push-setup) above for one-time setup (`.env`,
+`config/pipeline.config.yaml`'s `gitlab:` block).
 
 `requirements-analyzer` is genuinely optional: it only does anything useful when an SRS/CR
 document actually exists for the release. Point it at one, or skip the stage entirely — it will
@@ -189,6 +283,10 @@ Use the bug-reporter agent to file a bug based on the RCA for <symptom>.
 
 # 7. At the end of the cycle
 Use the release-notes-writer agent to prepare the closure report and release notes.
+
+# 8. Optional, once a draft is reviewed — pushes to GitLab, never automatic
+/push-bug <slug>
+/push-release-notes <version>
 ```
 
 Use the same `run_id` across a cycle (state it explicitly, e.g. "for run 2026-07-rc2") so every
@@ -202,14 +300,17 @@ Subagents are typically invoked by name (`@agent-name` or by asking Claude to "u
 ```
 qa-agent-pipeline/
 ├── prompts/                 SOURCE OF TRUTH — one file per agent, plain instructions
-│   └── commands/qa-pipeline.md  SOURCE OF TRUTH for the orchestrator command
+│   └── commands/            SOURCE OF TRUTH for slash commands (qa-pipeline, push-bug, ...)
 ├── config/
 │   ├── agents.yaml           agent metadata (description, tool permissions)
 │   ├── commands.yaml         command metadata (description, argument hint)
-│   └── pipeline.config.yaml  where agents write output (output_dir + file names)
+│   └── pipeline.config.yaml  where agents write output (output_dir + file names), plus the
+│                             gitlab: block (project, wiki dir, severity label map)
 ├── scripts/generate_agents.py   regenerates .claude/ from prompts/ + config/
 ├── .claude/agents/          generated — Claude Code subagent files (committed)
 ├── .claude/commands/        generated — Claude Code slash commands (committed)
+├── .mcp.json                GitLab MCP server config (issues+wiki only) for gitlab-publisher
+├── .env.example              template for your own GITLAB_PERSONAL_ACCESS_TOKEN / API URL
 ├── templates/               required output structure for each agent
 │   └── bug-report.template.md   <- replace this with your team's real template
 ├── output/                  where agents write results (gitignored per-project data,
@@ -245,13 +346,30 @@ invocations documented above, built from this repo's own `prompts/` — so the c
 keeps working unchanged whether or not you use it. Point it at any project with `--project-dir`;
 that project does not need `.claude/` or anything else copied into it first.
 
-```
+```bash
 pip install -r dashboard/requirements.txt
 python3 dashboard/server.py --project-dir /path/to/some/project
 ```
 
-See `dashboard/README.md` for details, including how the test-plan review gate is surfaced in
-the UI.
+Then open `http://127.0.0.1:8765` in a browser (`--project-dir` defaults to `.` if omitted, and
+you can pass `--port` to change the port). See `dashboard/README.md` for details, including how
+the test-plan review gate is surfaced in the UI.
+
+## Troubleshooting
+
+- **`/agents` doesn't list the pipeline's agents.** Make sure you started `claude` from inside
+  this repo (or a project where `.claude/agents/` was copied in) — agent definitions are
+  resolved from the current working directory.
+- **`/mcp` shows `gitlab` as unavailable / "Connection closed".** Almost always one of: the
+  one-time trust prompt wasn't accepted yet, `mcp-gitlab` isn't installed globally (see
+  [GitLab push setup](#optional--gitlab-push-setup)), or `.env` is missing/empty. Restart
+  `claude` after fixing any of these.
+- **An agent says a prior stage's output is missing.** Run the stage it depends on first (see
+  the [table above](#the-agents) for what each agent reads), or tell it which `run_id` to look
+  in if you're not using today's date.
+- **I edited a prompt and nothing changed.** Prompts under `prompts/` aren't used directly —
+  run `python3 scripts/generate_agents.py` (needs `pip install pyyaml`) to regenerate
+  `.claude/agents/` and `.claude/commands/`, then restart `claude`.
 
 ## Versioning
 

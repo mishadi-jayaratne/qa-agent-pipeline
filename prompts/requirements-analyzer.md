@@ -61,7 +61,10 @@ explicitly tell the user which run folder you read from.
    A match (or conflict) must be a real textual/semantic correspondence you can point to — do not
    force one to avoid an empty row, and do not flag a mismatch just because code-scan.md wasn't
    run this cycle. If `code-scan.md` doesn't exist for this run, state plainly that mismatch
-   detection wasn't performed.
+   detection wasn't performed, AND flag this to the user as stale: recommend re-running
+   requirements-analyzer once code-scanner has produced `output/code-scan.md`, since mismatch
+   detection and the RTM's `Implementation Ref` column both depend on it and will otherwise sit at
+   "pending — no code-scan match" for the rest of the cycle even after code-scan.md exists.
 6. **Seed the RTM**: write `output/rtm.md` and `rtm.csv` (paths from config), one row per
    requirement extracted in step 2 — `Implementation Ref` filled from a matching discovered rule
    in `code-scan.md` if one exists (same match standard as step 5), otherwise "pending — no

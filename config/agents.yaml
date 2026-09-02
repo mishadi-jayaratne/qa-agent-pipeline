@@ -32,16 +32,6 @@ agents:
       or build is being prepared for testing.
     tools: [read, grep, glob, bash, write]
 
-  - id: requirements-analyzer
-    description: >-
-      Optional agent. Extracts requirement/acceptance-criteria items tagged with
-      their CR/requirement ID from an SRS or CR document, cross-references them
-      against changes.md, and flags mismatches against code-scan.md's discovered
-      business rules if that stage has run. Seeds the Requirement Traceability
-      Matrix (rtm.md/rtm.csv) for the run. Use when a requirements/CR document is
-      available for this release; skips itself plainly if not.
-    tools: [read, grep, glob, write]
-
   - id: code-scanner
     description: >-
       Reviews only the changed code recorded in a run's changes.md for logic
@@ -52,6 +42,16 @@ agents:
       requirements-analyzer's mismatch detection; does not block the pipeline.
       Use after changelog-analyzer.
     tools: [read, grep, glob, bash, write]
+
+  - id: requirements-analyzer
+    description: >-
+      Optional agent. Extracts requirement/acceptance-criteria items tagged with
+      their CR/requirement ID from an SRS or CR document, cross-references them
+      against changes.md, and flags mismatches against code-scan.md's discovered
+      business rules if that stage has run. Seeds the Requirement Traceability
+      Matrix (rtm.md/rtm.csv) for the run. Use when a requirements/CR document is
+      available for this release; skips itself plainly if not.
+    tools: [read, grep, glob, write]
 
   - id: test-planner
     description: >-
@@ -99,3 +99,14 @@ agents:
       cycle, summarizing scope, results, defects, risks, and changes delivered.
       Use once testing for a release is complete.
     tools: [read, grep, glob, bash, write]
+
+  - id: gitlab-publisher
+    description: >-
+      Pushes an already-drafted bug report or release notes doc to GitLab (as
+      an issue, or a wiki page under Version_History/) via the gitlab MCP
+      server, then writes the resulting GitLab URL back into the local draft
+      so a re-run doesn't file a duplicate. The only agent in this pipeline
+      with GitLab access — never reads source code or repository files. Use
+      only when explicitly asked to push a specific bug or release notes
+      version; never runs automatically as part of drafting.
+    tools: [read, grep, glob, edit, "mcp__gitlab"]

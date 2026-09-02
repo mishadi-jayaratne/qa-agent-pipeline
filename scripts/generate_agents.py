@@ -45,6 +45,15 @@ CLAUDE_TOOL_NAMES = {
     "edit": "Edit",
 }
 
+# MCP server tools are passed through as-is (e.g. "mcp__gitlab" grants every tool the
+# "gitlab" server in .mcp.json exposes — narrowed there via GITLAB_TOOLSETS, not here).
+def resolve_tool_name(tool: str) -> str:
+    if tool in CLAUDE_TOOL_NAMES:
+        return CLAUDE_TOOL_NAMES[tool]
+    if tool.startswith("mcp__"):
+        return tool
+    raise KeyError(tool)
+
 
 def load_config():
     with open(CONFIG) as f:
@@ -65,7 +74,7 @@ def clean_description(desc: str) -> str:
 
 
 def write_claude_agent(agent: dict, body: str):
-    tools = ", ".join(CLAUDE_TOOL_NAMES[t] for t in agent["tools"])
+    tools = ", ".join(resolve_tool_name(t) for t in agent["tools"])
     desc = clean_description(agent["description"])
     frontmatter = (
         "---\n"
@@ -119,7 +128,10 @@ def main():
             sys.exit(f"Duplicate agent id in config/agents.yaml: {agent['id']}")
         seen_ids.add(agent["id"])
 
-        unknown = set(agent["tools"]) - set(CLAUDE_TOOL_NAMES)
+        unknown = {
+            t for t in agent["tools"]
+            if t not in CLAUDE_TOOL_NAMES and not t.startswith("mcp__")
+        }
         if unknown:
             sys.exit(f"{agent['id']}: unknown tool(s) {unknown} in config/agents.yaml")
 

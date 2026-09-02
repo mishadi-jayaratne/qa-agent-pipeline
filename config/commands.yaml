@@ -8,4 +8,18 @@ commands:
       Run a sequence of QA pipeline stages in one go, invoking each stage's subagent in
       order. Stops automatically before test-cases if it was chained right after test-plan,
       since the test plan needs human review first.
-    argument_hint: "[stage stage ...]  e.g. context changelog requirements code-scan test-plan"
+    argument_hint: "[stage stage ...]  e.g. context changelog code-scan requirements test-plan"
+
+  - id: push-bug
+    description: >-
+      Push one already-drafted bug report to GitLab as an issue, via the gitlab-publisher
+      subagent. Never runs automatically — a separate, explicit step after bug-reporter
+      drafts the report.
+    argument_hint: "<bug-slug>  e.g. login-timeout"
+
+  - id: push-release-notes
+    description: >-
+      Push the drafted release notes to GitLab as a wiki page, via the gitlab-publisher
+      subagent. Never runs automatically — a separate, explicit step after
+      release-notes-writer drafts them.
+    argument_hint: "<version>  e.g. 3.0.68-DA"

@@ -111,7 +111,7 @@ async function runAgent(agentId, extraInput) {
 }
 
 document.getElementById("run-pipeline").addEventListener("click", async () => {
-  const stages = document.getElementById("stages").value.trim() || "context changelog test-plan";
+  const stages = document.getElementById("stages").value.trim() || "context changelog code-scan requirements test-plan";
   const body = { mode: "pipeline", stages, run_id: currentRunId() };
   const { job_id } = await fetchJSON("/api/run", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),

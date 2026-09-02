@@ -82,8 +82,11 @@ and explicitly tell the user which run folder you read from.
       file exists for this run (cite the requirement ID and/or file:line).
     - `output/code-scan.md`'s discovered business rules that read as ambiguous or clearly
       undocumented, if that file exists for this run (cite the file:line).
-    Every question needs a concrete source citation — no generic or speculative questions. If
-    none of the three source files surfaced anything, leave the table empty rather than
+    Every question needs a concrete source citation — no generic or speculative questions. When a
+    question is pulled from `requirements.md` or `code-scan.md`, quote that source's own wording
+    verbatim (with its citation) rather than restating the finding in your own words — an
+    independent paraphrase drifts out of sync with the source on a future edit; a verbatim quote
+    can't. If none of the three source files surfaced anything, leave the table empty rather than
     inventing filler questions.
 
 ## Rules

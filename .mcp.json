@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "gitlab": {
+      "command": "bash",
+      "args": ["-c", "set -a; [ -f .env ] && source .env; set +a; exec mcp-gitlab"],
+      "env": {
+        "GITLAB_TOOLSETS": "wiki,issues"
+      }
+    }
+  }
+}

@@ -17,6 +17,17 @@ inputs:
   logs_dir: null              # default directory log-analyzer looks in if none specified
   bug_template: templates/bug-report.template.md
 
+# GitLab project the gitlab-publisher agent files bugs/release notes against. Not a secret —
+# the actual credential (GITLAB_PERSONAL_ACCESS_TOKEN) and instance URL (GITLAB_API_URL) are
+# per-teammate values set in .env (see .env.example), never committed here.
+gitlab:
+  project: mishadij5/qa-agent-pipeline-test   # e.g. "group/subgroup/project" or the numeric project ID
+  wiki_release_notes_dir: Version_History   # release notes wiki page: <this>/<version>-Release
+  severity_labels: null       # optional map of template Severity values -> GitLab label names,
+                               # e.g. {Critical: "severity::1", High: "severity::2"}. Leave null
+                               # to have gitlab-publisher use your project's existing labels
+                               # as-is and ask if a Severity value doesn't match one.
+
 # File/folder names within a run. Rarely need to change these — mainly here so a team can
 # rename to match existing conventions without editing every agent prompt. All paths below
 # resolve under <output_dir>/<runs_subdir>/<run_id>/ EXCEPT `context`, which lives directly

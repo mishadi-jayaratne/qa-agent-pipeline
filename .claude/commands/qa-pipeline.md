@@ -1,6 +1,6 @@
 ---
 description: Run a sequence of QA pipeline stages in one go, invoking each stage's subagent in order. Stops automatically before test-cases if it was chained right after test-plan, since the test plan needs human review first.
-argument-hint: "[stage stage ...]  e.g. context changelog requirements code-scan test-plan"
+argument-hint: "[stage stage ...]  e.g. context changelog code-scan requirements test-plan"
 ---
 
 Run the QA pipeline stages given in the arguments below, in the order given — invoking each

@@ -24,23 +24,42 @@ and explicitly tell the user which run folder you read from.
 - `output/changes.md`, `output/test-plan.md`, `output/test-cases/`, `output/bugs/`,
   `output/rca/` — whatever exists from this cycle. Use what's available; note what's missing.
 - `templates/test-closure-report.template.md` and `templates/release-notes.template.md`.
+- Release-specific facts the user supplies directly in their prompt for this run: release
+  location (link), md5sum of the release file, modules released, and deployment/patch
+  instructions (files to replace, config diffs, properties to add). These are not derivable
+  from the repo — take them from the user's message as-is, do not infer or invent them. If the
+  user doesn't supply one of these fields, leave its placeholder in the output rather than
+  guessing.
 
 ## Process — Test Closure Report (internal audience: QA/eng/PM)
-1. Summarize test scope actually executed vs. planned (compare against `test-plan.md`).
-2. Summarize results: test cases executed, passed, failed, blocked, not-executed, with counts.
-3. Summarize defects found this cycle from `output/bugs/`: count by severity, status, and any
-   still-open at closure.
-4. State exit criteria met/not met (from `test-plan.md`) and call out residual risk explicitly —
+1. State the Release Type (patch/major/minor) from what the user states, or infer from the
+   version identifier if unambiguous (e.g. a point/patch version bump); otherwise leave the
+   placeholder.
+2. Summarize test scope actually executed vs. planned (compare against `test-plan.md`).
+3. Summarize results: total/executed/passed/failed test cases, with counts, and a link to the
+   test run/execution sheet if one was supplied or is in `output/test-plan.md`.
+4. Summarize bug status from `output/bugs/`: newly added, reopened, closed, and CRB-verified
+   counts, plus a severity breakdown (Blocker/Critical/Major/Normal/Minor/Trivial/Enhancement).
+5. List Found Bugs (new this cycle), Reopened Bugs, Fixed Bugs (verified closed this cycle), and
+   Known Bugs (open, shipping as-is) by title/summary — cross-check against `output/bugs/`, and
+   write "N.A" (or "No" for Known Bugs) for any empty list rather than leaving it blank.
+6. State exit criteria met/not met (from `test-plan.md`) and call out residual risk explicitly —
    known issues being accepted, areas with reduced coverage, anything shipping with caveats.
-5. Give a clear Go / No-Go / Go-with-conditions recommendation, with the reasoning stated plainly.
+7. Give a clear Go / No-Go / Go-with-conditions recommendation, with the reasoning stated plainly.
 
 ## Process — Release Notes (external/stakeholder audience)
-1. Translate `output/changes.md` into plain, user-facing language — no internal jargon, ticket
-   IDs, or file paths. Group by New Features / Improvements / Bug Fixes, same as most changelogs.
-2. Only mention fixed bugs that are confirmed resolved — cross-check against `output/bugs/`
-   status. Do not list known/open issues here.
-3. Call out breaking changes or required user action prominently, near the top.
-4. Keep it concise — this is for people who did not follow the project day to day.
+1. Fill in Release Location, md5sum, Modules Released, and How To Deploy from what the user
+   supplied in their prompt for this run — verbatim, do not paraphrase links, checksums, or
+   config diffs.
+2. Translate `output/changes.md` into plain, user-facing language — no internal jargon, ticket
+   IDs, or file paths — for Available Features / Enhancements / Fixed Issues, same as most
+   changelogs.
+3. Only mention fixed issues that are confirmed resolved — cross-check against `output/bugs/`
+   status. Do not list known/open issues here; those belong under Limitation / Known Issues.
+4. Call out breaking changes or required user action prominently, near the top.
+5. Tested Areas: link to the test run/execution sheet if the user supplied one or it's in
+   `output/test-plan.md` / `output/test-cases/`; otherwise leave the placeholder.
+6. Keep it concise — this is for people who did not follow the project day to day.
 
 ## Rules
 - Never state test results, pass/fail counts, or "resolved" status you cannot trace to an actual

@@ -1,16 +1,30 @@
-# Release Notes — <release/version identifier>
+# <release/version identifier> Release Note
 
-Release date: <!-- date -->
+Release Location: <!-- link to build/artifact location -->
 
-## Important / Breaking Changes
-<!-- Omit section if none. Anything requiring user action, prominently up top. -->
+md5sum of release file: <!-- checksum  filename -->
 
-## New Features
+## Modules Released
 -
 
-## Improvements
+## How To Deploy
+<!-- Deployment/patch steps, files to replace, config changes (diffs welcome). -->
+
+## Available Features
+<!-- New capabilities enabled in this release. N.A if none. -->
 -
 
-## Bug Fixes
-<!-- Only confirmed-resolved bugs from output/bugs/. -->
+## Enhancements
+<!-- N.A if none. -->
 -
+
+## Fixed Issues
+<!-- Only confirmed-resolved bugs from output/bugs/. N.A if none. -->
+-
+
+## Limitation / Known Issues
+<!-- N.A if none. -->
+-
+
+## Tested Areas
+<!-- Link to the test run / execution sheet. -->

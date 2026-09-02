@@ -8,3 +8,7 @@ output/*
 
 # If you cloned this pipeline INSIDE a project repo and want output/ committed as part of
 # that project's own history instead, delete this .gitignore (or the output/ rule above).
+
+# Per-teammate secrets for the gitlab-publisher agent's MCP server (personal GitLab token +
+# instance URL). Never commit real values — copy .env.example to .env and fill in your own.
+.env
