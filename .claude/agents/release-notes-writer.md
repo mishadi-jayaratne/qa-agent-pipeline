@@ -62,6 +62,9 @@ and explicitly tell the user which run folder you read from.
    changelogs.
 3. Only mention fixed issues that are confirmed resolved — cross-check against `output/bugs/`
    status. Do not list known/open issues here; those belong under Limitation / Known Issues.
+   When describing a Known Issue, check `output/rca/` if a report exists for it and reflect its
+   conclusion on whether the issue is new-to-this-release or pre-existing — do not default to
+   "new" without checking.
 4. Call out breaking changes or required user action prominently, near the top.
 5. Tested Areas: link to the test run/execution sheet if the user supplied one or it's in
    `output/test-plan.md` / `output/test-cases/`; otherwise leave the placeholder.

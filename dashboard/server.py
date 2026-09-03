@@ -19,6 +19,7 @@ import asyncio
 import csv
 import io
 import json
+import os
 import shutil
 import sys
 import time
@@ -48,6 +49,17 @@ CLAUDE_TOOL_NAMES = {
     "write": "Write",
     "edit": "Edit",
 }
+
+
+# MCP server tools are passed through as-is (e.g. "mcp__gitlab" grants every tool the
+# "gitlab" server in .mcp.json exposes), same as scripts/generate_agents.py's
+# resolve_tool_name — needed for gitlab-publisher, the only agent with an mcp__ tool.
+def resolve_tool_name(tool: str) -> str:
+    if tool in CLAUDE_TOOL_NAMES:
+        return CLAUDE_TOOL_NAMES[tool]
+    if tool.startswith("mcp__"):
+        return tool
+    raise KeyError(tool)
 
 # Default one-line action per agent, appended with any user-supplied extra context.
 # These mirror the "Typical workflow" examples in the root README.
@@ -123,7 +135,7 @@ def build_agents_json(agent_ids: list[str]) -> str:
         spec[agent_id] = {
             "description": agent["description"],
             "prompt": read_prompt_body(agent_id),
-            "tools": [CLAUDE_TOOL_NAMES[t] for t in agent["tools"]],
+            "tools": [resolve_tool_name(t) for t in agent["tools"]],
         }
     return json.dumps(spec)
 
@@ -228,6 +240,64 @@ JOB_QUEUE: "asyncio.Queue[str]" = asyncio.Queue()
 APPROVED_RUN_IDS: set[str] = set()
 
 
+def pipeline_env() -> dict:
+    """The dashboard's own env plus PIPELINE_ROOT/.env (e.g. GITLAB_PERSONAL_ACCESS_TOKEN,
+    GITLAB_API_URL). The mcp-gitlab server's launch script also tries to `source .env`
+    itself, but relative to the subprocess's cwd (PROJECT_DIR, the target project) —
+    not PIPELINE_ROOT — so that lookup misses; loading it here and injecting into the
+    subprocess env is what actually makes the values available."""
+    env = os.environ.copy()
+    env_file = PIPELINE_ROOT / ".env"
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            env[key.strip()] = value.strip()
+    return env
+
+
+def agent_uses_mcp(agent_id: str) -> bool:
+    agent = agents_by_id().get(agent_id)
+    return bool(agent) and any(t.startswith("mcp__") for t in agent["tools"])
+
+
+def gitlab_config_hint() -> str:
+    """gitlab-publisher's prompt tells it to read config/pipeline.config.yaml for the
+    gitlab: block (project, wiki_release_notes_dir, severity_labels). That file lives
+    in PIPELINE_ROOT, not PROJECT_DIR (the agent's cwd), so it's invisible to a plain
+    Read the way output_dir isn't — output_dir has a safe hardcoded fallback, but
+    gitlab.project doesn't, so the agent would otherwise correctly refuse to guess it.
+    Resolve it here (same load_pipeline_config() the dashboard already uses) and hand
+    the values over directly instead of leaving the agent to find the file itself."""
+    cfg = load_pipeline_config()
+    gitlab_cfg = cfg.get("gitlab") or {}
+    if not gitlab_cfg.get("project"):
+        return ""
+    return (
+        f" Do not try to read config/pipeline.config.yaml yourself — it lives in the "
+        f"pipeline repo, not this project, so it won't be found here. Its `gitlab:` block "
+        f"has already been resolved for you: project=`{gitlab_cfg['project']}`, "
+        f"wiki_release_notes_dir=`{gitlab_cfg.get('wiki_release_notes_dir') or 'Version_History'}`, "
+        f"severity_labels=`{gitlab_cfg.get('severity_labels')}`. Use these values directly."
+    )
+
+
+def mcp_config_args(agent_ids: list[str]) -> list[str]:
+    """--mcp-config for PIPELINE_ROOT's .mcp.json, only when one of the given agents
+    actually needs an mcp__ tool (e.g. gitlab-publisher). The subprocess runs with
+    cwd=PROJECT_DIR (the target project being tested), which generally has no
+    .mcp.json of its own, so the server definition has to be pointed at explicitly —
+    it won't be auto-discovered from cwd."""
+    if not any(agent_uses_mcp(a) for a in agent_ids):
+        return []
+    mcp_json = PIPELINE_ROOT / ".mcp.json"
+    if not mcp_json.exists():
+        raise RuntimeError(f".mcp.json not found under {PIPELINE_ROOT} (needed for mcp__ tools)")
+    return ["--mcp-config", str(mcp_json)]
+
+
 def build_command(job: Job):
     if not CLAUDE_BIN:
         raise RuntimeError("`claude` was not found on PATH")
@@ -244,9 +314,12 @@ def build_command(job: Job):
         if job.run_id:
             prompt += f" Use run_id {job.run_id}."
         prompt += output_dir_hint
+        if job.agent_id == "gitlab-publisher":
+            prompt += gitlab_config_hint()
         agents_json = build_agents_json([job.agent_id])
         return [
             CLAUDE_BIN, "-p", "--agents", agents_json, "--agent", job.agent_id,
+            *mcp_config_args([job.agent_id]),
             "--output-format", "stream-json", "--verbose",
             "--permission-mode", "bypassPermissions",
             "--no-session-persistence",
@@ -266,9 +339,11 @@ def build_command(job: Job):
     if job.run_id:
         prompt += f"\n\nUse run_id {job.run_id} for every stage in this invocation."
     prompt += "\n\n" + output_dir_hint + " Pass this same output_dir instruction down to every subagent you delegate to."
-    agents_json = build_agents_json([a["id"] for a in load_agents()])
+    all_agent_ids = [a["id"] for a in load_agents()]
+    agents_json = build_agents_json(all_agent_ids)
     return [
         CLAUDE_BIN, "-p", "--agents", agents_json,
+        *mcp_config_args(all_agent_ids),
         "--output-format", "stream-json", "--verbose",
         "--allowedTools", "Task",
         "--permission-mode", "bypassPermissions",
@@ -344,7 +419,7 @@ async def run_job(job: Job):
     await job.emit({"kind": "debug", "text": " ".join(cmd[:-1]) + " <prompt>"})
 
     proc = await asyncio.create_subprocess_exec(
-        *cmd, cwd=str(PROJECT_DIR),
+        *cmd, cwd=str(PROJECT_DIR), env=pipeline_env(),
         stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
         # stream-json lines can carry a full tool result (e.g. a large file read or
         # directory listing) inline as a single line — asyncio's default 64KB

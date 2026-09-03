@@ -49,9 +49,13 @@ and explicitly tell the user which run folder you read from.
    or RCA report if available; otherwise flag it as needing human triage.
 6. **Update the RTM**: read `output/rtm.md` for this run IF it exists. If this bug traces to a
    test case that has a row in the RTM (via that test case's "Traces to"), append this bug
-   report's ID/filename to that row's `Defect ID(s)` column. If the bug doesn't trace to any RTM
-   row (e.g. found outside a test case, or the test case was Implementation-based with no RTM
-   row), skip this step — do not add a new row.
+   report's ID/filename to that row's `Defect ID(s)` column. If the bug doesn't trace to a test
+   case (e.g. found via log analysis outside test execution), check whether it clearly relates
+   to an existing requirement row in the RTM by scope/feature area — if so, append the defect
+   ID to that row's `Defect ID(s)` column and add a short note that it was found via
+   log-analysis/other means, not test execution. If no clear requirement match exists either
+   (or the test case was Implementation-based with no RTM row), skip this step — do not add a
+   new row.
 
 ## Rules
 - Do not modify any source file. You only write to `output/bugs/` and (updates only, never new
