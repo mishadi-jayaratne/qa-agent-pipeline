@@ -25,6 +25,17 @@ agents:
       changes.
     tools: [read, grep, glob, bash, write]
 
+  - id: regression-inventory-analyzer
+    description: >-
+      Optional agent. Reads an existing manual sanity/regression suite (spreadsheet CSV
+      export) and/or an automated regression suite (in-repo or a local directory), maps
+      each case to a scope area from context.md, and produces a normalized
+      regression-inventory.md (+ CSV). Refreshed in place like context.md, not per run. Use
+      once when onboarding a project that already has a regression/sanity suite, and re-run
+      whenever that suite meaningfully changes. Skips itself plainly if no suite is
+      configured.
+    tools: [read, grep, glob, write]
+
   - id: changelog-analyzer
     description: >-
       Analyzes a changelog, git diff, or set of commits for a new release and
@@ -46,26 +57,32 @@ agents:
   - id: requirements-analyzer
     description: >-
       Optional agent. Extracts requirement/acceptance-criteria items tagged with
-      their CR/requirement ID from an SRS or CR document, cross-references them
-      against changes.md, and flags mismatches against code-scan.md's discovered
-      business rules if that stage has run. Seeds the Requirement Traceability
-      Matrix (rtm.md/rtm.csv) for the run. Use when a requirements/CR document is
+      their CR/requirement ID from an SRS or CR document, reconciling them into a
+      persistent, refreshed-in-place requirements.md (like context.md) that
+      accumulates and updates across every source document seen over time rather
+      than a per-run snapshot. Cross-references against changes.md, and flags
+      mismatches against code-scan.md's discovered business rules if that stage
+      has run. Seeds this run's Requirement Traceability Matrix (rtm.md/rtm.csv)
+      from the current requirements.md. Use when a requirements/CR document is
       available for this release; skips itself plainly if not.
     tools: [read, grep, glob, write]
 
   - id: test-planner
     description: >-
       Analyzes changes.md against context.md to identify impacted areas
-      (direct and ripple/regression impact) and produces a thorough test-plan.md.
+      (direct and ripple/regression impact), cross-references impacted areas against
+      regression-inventory.md (if present) to pull in existing regression/sanity cases as
+      mandatory scope and flag coverage gaps, and produces a thorough test-plan.md.
       Use after changelog-analyzer, before writing test cases.
     tools: [read, grep, glob, bash, write]
 
   - id: test-case-writer
     description: >-
       Converts an approved test-plan.md into detailed manual test cases, each
-      tagged with Origin (requirement- vs. implementation-based), Category
-      (functional/regression/boundary/negative/security/accessibility), and
-      Automation Candidate for fast review; updates the run's RTM; and writes
+      tagged with Origin (requirement-based / implementation-based / existing-suite),
+      Category (functional/regression/boundary/negative/security/accessibility), and
+      Automation Candidate for fast review; references existing regression-inventory.md
+      cases instead of re-authoring them; updates the run's RTM; and writes
       a coverage-matrix.md (scope area x category counts, with gaps flagged
       against the test plan's stated scope). Use after the test plan has been
       reviewed and approved by a human.

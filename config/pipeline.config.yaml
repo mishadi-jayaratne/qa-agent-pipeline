@@ -16,6 +16,12 @@ inputs:
   requirements_docs: null    # path/glob to SRS/CR doc(s), read by requirements-analyzer
   logs_dir: null              # default directory log-analyzer looks in if none specified
   bug_template: templates/bug-report.template.md
+  regression_suite_manual: null     # path to a CSV export of the manual sanity/regression
+                                     # suite (Excel/Sheets/TestRail/Xray export), read by
+                                     # regression-inventory-analyzer
+  regression_suite_automated: null  # path/glob to automated regression/sanity specs, in-repo
+                                     # or an external local directory, read by
+                                     # regression-inventory-analyzer
 
 # GitLab project the gitlab-publisher agent files bugs/release notes against. Not a secret —
 # the actual credential (GITLAB_PERSONAL_ACCESS_TOKEN) and instance URL (GITLAB_API_URL) are
@@ -30,12 +36,16 @@ gitlab:
 
 # File/folder names within a run. Rarely need to change these — mainly here so a team can
 # rename to match existing conventions without editing every agent prompt. All paths below
-# resolve under <output_dir>/<runs_subdir>/<run_id>/ EXCEPT `context`, which lives directly
-# under <output_dir>/ — it's refreshed in place across runs, not versioned per cycle.
+# resolve under <output_dir>/<runs_subdir>/<run_id>/ EXCEPT `context`, `regression_inventory`
+# (+ `regression_inventory_csv`), and `requirements`, which live directly under <output_dir>/ —
+# refreshed in place across runs, not versioned per cycle. `rtm`/`rtm_csv` stay per-run: each
+# run seeds its own RTM from whatever `requirements.md` looks like at that point.
 paths:
   context: context.md
-  changes: changes.md
+  regression_inventory: regression-inventory.md
+  regression_inventory_csv: regression-inventory.csv
   requirements: requirements.md
+  changes: changes.md
   rtm: rtm.md
   rtm_csv: rtm.csv
   code_scan: code-scan.md

@@ -154,9 +154,9 @@ Open Claude Code in your project directory (`claude`), then either:
 - **@-mention it** (guarantees delegation instead of Claude deciding): `@context-analyzer analyze this codebase and update context.md`
 - **List what's available:** `/agents`
 
-Agent names: `context-analyzer`, `changelog-analyzer`, `requirements-analyzer`, `code-scanner`,
-`test-planner`, `test-case-writer`, `log-analyzer`, `rca-analyst`, `bug-reporter`,
-`release-notes-writer`, `gitlab-publisher`.
+Agent names: `context-analyzer`, `regression-inventory-analyzer`, `changelog-analyzer`,
+`requirements-analyzer`, `code-scanner`, `test-planner`, `test-case-writer`, `log-analyzer`,
+`rca-analyst`, `bug-reporter`, `release-notes-writer`, `gitlab-publisher`.
 
 ## Running a pipeline (orchestrator)
 
@@ -165,6 +165,7 @@ For running several stages back-to-back instead of one at a time, Claude Code ge
 
 ```
 /qa-pipeline context changelog test-plan
+/qa-pipeline regression-inventory
 /qa-pipeline requirements code-scan
 /qa-pipeline test-cases
 /qa-pipeline log-analysis
@@ -189,12 +190,13 @@ from the source file at `prompts/commands/qa-pipeline.md`.
 | Order | Agent | Reads | Writes |
 |---|---|---|---|
 | 1 | `context-analyzer` | codebase | `output/context.md` |
+| — | `regression-inventory-analyzer` *(optional, standing asset)* | manual suite CSV\*, automated specs\*, `context.md` | `output/regression-inventory.md`, `output/regression-inventory.csv` |
 | 2 | `changelog-analyzer` | changelog/commits/diff | `output/changes.md` |
 | 3 | `requirements-analyzer` *(optional)* | SRS/CR doc, `changes.md`, `code-scan.md`\* | `output/requirements.md`, `output/rtm.md`, `output/rtm.csv` |
 | 4 | `code-scanner` *(optional)* | changed code from `changes.md`, `context.md` | `output/code-scan.md` |
-| 5 | `test-planner` | `changes.md`, `context.md`, `requirements.md`\*, `code-scan.md`\* | `output/test-plan.md`, `output/test-plan.csv` |
+| 5 | `test-planner` | `changes.md`, `context.md`, `requirements.md`\*, `code-scan.md`\*, `regression-inventory.md`\* | `output/test-plan.md`, `output/test-plan.csv` |
 | — | *(human review & sign-off on the test plan)* | | |
-| 6 | `test-case-writer` | `test-plan.md` | `output/test-cases/*.md`, `output/test-cases.csv`, `output/coverage-matrix.md`, updates `output/rtm.md`\* |
+| 6 | `test-case-writer` | `test-plan.md`, `regression-inventory.md`\* | `output/test-cases/*.md`, `output/test-cases.csv`, `output/coverage-matrix.md`, updates `output/rtm.md`\* |
 | 7 | `log-analyzer` | logs (ad hoc, during execution) | `output/log-analysis.md` |
 | 8 | `rca-analyst` | bug symptom, code, logs, `changes.md` | `output/rca/*.md` |
 | 9 | `bug-reporter` | RCA, test case, your template | `output/bugs/*.md`, updates `output/rtm.md`\* |
@@ -221,6 +223,19 @@ same push is recognized as already-done instead of filing a duplicate. See
 document actually exists for the release. Point it at one, or skip the stage entirely — it will
 say so plainly and stop rather than fabricate requirements if none is available.
 
+**Existing regression/sanity coverage.** `regression-inventory-analyzer` is the same kind of
+standing asset as `context-analyzer` — refreshed in place at `output/regression-inventory.md`,
+not versioned per run, and re-run only when your existing suite meaningfully changes (not every
+release cycle). Point it at a manual suite (`inputs.regression_suite_manual`, a CSV export of
+your spreadsheet/TestRail/Xray/Zephyr suite), an automated suite (`inputs.regression_suite_automated`,
+a path/glob to Cypress/Playwright/Selenium/pytest-style specs, in-repo or a local directory), or
+both — either can be left unset, in which case the agent skips itself plainly. When the inventory
+exists, `test-planner` cross-references it and pulls matching existing cases into a mandatory
+"Existing Regression/Sanity Coverage" section of the test plan (so they get executed, not just
+referenced), and flags impacted areas with none as "Regression Coverage Gaps." `test-case-writer`
+then references those existing Case IDs (`Origin: Existing-Suite`) instead of re-authoring
+equivalent regression cases from scratch.
+
 **Requirement Traceability Matrix (RTM).** `requirements-analyzer` seeds `output/rtm.md` +
 `rtm.csv` (Requirement ID → Source Ref → Implementation Ref → Test Case ID(s) → Test Status →
 Defect ID(s)) whenever it has a requirements document to extract from. `Implementation Ref` is
@@ -237,9 +252,10 @@ something, not only at a fixed point in the sequence.
 
 `test-planner` and `test-case-writer` always write a CSV alongside their markdown
 (`test-plan.csv`, `test-cases.csv`, paths configurable in `config/pipeline.config.yaml`) — no
-setup required, this happens every run. They're meant for manual import into Google Sheets
-(**File > Import > Append to current sheet**) whenever you want the data there; no agent in this
-pipeline touches Google Sheets or any external tool itself.
+setup required, this happens every run. `regression-inventory-analyzer` does the same
+(`regression-inventory.csv`) whenever it actually runs. They're meant for manual import into
+Google Sheets (**File > Import > Append to current sheet**) whenever you want the data there; no
+agent in this pipeline touches Google Sheets or any external tool itself.
 
 ### Coverage matrix
 

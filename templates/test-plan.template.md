@@ -1,7 +1,7 @@
 # Test Plan — <release/version identifier>
 
 Based on: `output/changes.md`, `output/context.md` (and `output/requirements.md`,
-`output/code-scan.md` where available)
+`output/code-scan.md`, `output/regression-inventory.md` where available)
 Status: DRAFT — requires human review and sign-off before test case writing begins
 
 ## Scope Summary
@@ -23,6 +23,19 @@ Status: DRAFT — requires human review and sign-off before test case writing be
 <!-- From output/requirements.md for this run, if it exists: which impacted areas trace to a
 CR/requirement ID. If requirements.md doesn't exist this cycle, state plainly:
 "CR traceability not performed this cycle." -->
+
+## Existing Regression/Sanity Coverage
+<!-- From output/regression-inventory.md for this run, if it exists: for each impacted area
+above that has matching existing case(s), list them here as mandatory scope for this cycle —
+these are cases to execute, not just references. Format: "<Scope Area>: TC <Case ID>, TC
+<Case ID>, ...". If regression-inventory.md doesn't exist this cycle, state plainly:
+"Regression inventory cross-reference not performed this cycle." -->
+
+## Regression Coverage Gaps
+<!-- Impacted areas above that have zero matching existing case(s) in regression-inventory.md
+(when that file exists) — i.e. this area needs regression coverage but none exists yet. One
+line per area. Omit this section entirely if regression-inventory.md wasn't available, or if
+every impacted area had at least one match. -->
 
 ## Known Fragile Areas - Not In Scope This Release
 <!-- High-churn / high-defect modules (from git history and past output/runs/*/bugs/) with zero

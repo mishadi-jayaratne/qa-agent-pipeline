@@ -10,6 +10,7 @@ release just landed" chain).
 | Stage name | Subagent invoked |
 |---|---|
 | `context` | context-analyzer |
+| `regression-inventory` | regression-inventory-analyzer |
 | `changelog` | changelog-analyzer |
 | `requirements` | requirements-analyzer |
 | `code-scan` | code-scanner |
@@ -29,8 +30,10 @@ release just landed" chain).
    tell the user rather than guessing what they meant, and skip it.
 2. Before invoking a stage, check whether it needs input that hasn't been provided yet — e.g.
    `changelog` needs a commit range/changelog source, `log-analysis` needs a log file/path,
-   `rca` needs a bug/symptom description, `bug-report` needs to know which bug it's for. If
-   something's missing, ask the user for it before invoking that stage.
+   `rca` needs a bug/symptom description, `bug-report` needs to know which bug it's for,
+   `regression-inventory` needs at least one of `inputs.regression_suite_manual` or
+   `inputs.regression_suite_automated` configured (or given ad hoc). If something's missing,
+   ask the user for it before invoking that stage.
 3. After each stage completes, briefly report what file it wrote before moving to the next one.
 4. **Hard gate — do not skip this:** if `test-plan` is in this run and `test-cases` comes
    immediately after it in the same run, STOP after test-planner finishes. Tell the user the

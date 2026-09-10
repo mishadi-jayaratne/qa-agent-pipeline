@@ -5,11 +5,12 @@ Traces to: `output/test-plan.md` § <scope area>
 ---
 
 ## TC-<###>: <Title>
-- **Origin:** Requirement-based / Implementation-based
+- **Origin:** Requirement-based / Implementation-based / Existing-Suite
 - **Category:** Functional / Regression / Boundary / Negative / Security / Accessibility
 - **Automation Candidate:** Yes / No — <one-line reason>
 - **Priority:** High / Medium / Low
-- **Traces to:** <CR/requirement ID or change ref from changes.md>
+- **Traces to:** <CR/requirement ID or change ref from changes.md — or, for Existing-Suite,
+  the regression-inventory Case ID (or title, if the source had no ID)>
 - **Preconditions:** <state required before execution>
 
 **Steps:**
@@ -20,7 +21,11 @@ Traces to: `output/test-plan.md` § <scope area>
 (e.g. a cache-then-fresh-lookup sequence where step 2 and step 3 each assert something different).
 Collapse to a single trailing "**Expected Result:**" line only when every step is pure setup and
 one final assertion is genuinely the only outcome that matters. Never mix the two — pick one form
-per test case. -->
+per test case.
+
+For an Existing-Suite case (one already covered by output/regression-inventory.md — do not
+re-author it), collapse Steps/Preconditions to a single line instead:
+"**Steps:** See existing suite: <Case ID or title>." -->
 
 ---
 

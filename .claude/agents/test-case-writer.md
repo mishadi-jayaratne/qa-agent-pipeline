@@ -1,6 +1,6 @@
 ---
 name: test-case-writer
-description: Converts an approved test-plan.md into detailed manual test cases, each tagged with Origin (requirement- vs. implementation-based), Category (functional/regression/boundary/negative/security/accessibility), and Automation Candidate for fast review; updates the run's RTM; and writes a coverage-matrix.md (scope area x category counts, with gaps flagged against the test plan's stated scope). Use after the test plan has been reviewed and approved by a human.
+description: Converts an approved test-plan.md into detailed manual test cases, each tagged with Origin (requirement-based / implementation-based / existing-suite), Category (functional/regression/boundary/negative/security/accessibility), and Automation Candidate for fast review; references existing regression-inventory.md cases instead of re-authoring them; updates the run's RTM; and writes a coverage-matrix.md (scope area x category counts, with gaps flagged against the test plan's stated scope). Use after the test plan has been reviewed and approved by a human.
 tools: Read, Grep, Glob, Write
 ---
 
@@ -30,6 +30,8 @@ and explicitly tell the user which run folder you read from.
 - `output/context.md`, for terminology, module names, and environment details.
 - `output/requirements.md` and `output/code-scan.md`, if present for this run — used to
   determine each test case's Origin (see Process).
+- `output/regression-inventory.md`, IF it exists — optional, not run-versioned. Used to avoid
+  re-authoring regression/sanity cases the existing suite already covers (see Process).
 - `output/rtm.md`, if present for this run — updated in place (see Process).
 - `templates/test-case.template.md` — the required structure for each test case.
 - `templates/coverage-matrix.template.md` — the required structure for the coverage matrix.
@@ -37,26 +39,37 @@ and explicitly tell the user which run folder you read from.
 ## Process
 1. Work through `test-plan.md` scope area by area (not change by change — one scope area may
    need several test cases, one change may span several scope areas).
-2. For each scope area, write test cases covering:
+2. **Existing-suite cases first**: for each scope area, check `test-plan.md`'s "Existing
+   Regression/Sanity Coverage" section for Case IDs already listed against that area. For each
+   one, emit a single test case with `Origin: Existing-Suite`, `Category: Regression`, `Traces
+   to:` the Case ID (or title, if the inventory had no ID), and `Steps: See existing suite:
+   <Case ID or title>` — do not author fresh Preconditions/Steps/Expected Results for it, and do
+   not also write an independent regression case covering the same behavior (that would
+   duplicate coverage the inventory already accounts for). Everything else in this scope area —
+   positive/negative/edge cases not already covered by the inventory — still gets authored
+   normally per the steps below.
+3. For each scope area, write test cases covering:
    - **Positive cases**: expected/happy-path behavior.
    - **Negative cases**: invalid input, unauthorized access, unexpected sequences, failure
      handling.
    - **Edge cases**: boundary values, empty/null/max states, race conditions, concurrency,
      timeouts — whatever is relevant to that specific area (not a generic boilerplate list).
-3. Each test case must be independently executable: clear preconditions, numbered steps, and one
+4. Each test case must be independently executable: clear preconditions, numbered steps, and one
    unambiguous expected result per step whenever steps are independent checkpoints a tester needs
    to verify separately (e.g. one step asserts a cached response, a later step asserts a fresh
    lookup) — don't cram multiple distinct assertions into one trailing result where a partial
    pass/fail would be ambiguous. Only collapse to a single expected result for the whole case when
    every step before the last is pure setup with nothing to verify. See
-   `templates/test-case.template.md` for both forms.
-4. Assign a priority (High/Medium/Low) consistent with the risk rating from the test plan, and
+   `templates/test-case.template.md` for both forms. (Existing-Suite cases from step 2 use the
+   collapsed one-line Steps form regardless — see that step.)
+5. Assign a priority (High/Medium/Low) consistent with the risk rating from the test plan, and
    tag each case with the scope area / change it traces back to, for traceability.
-5. **Classify each test case for fast review**:
-   - **Origin**: `Requirement-based` if it traces to a CR/requirement ID in `output/requirements.md`
-     for this run, otherwise `Implementation-based` if it traces to a `file:line` business rule in
-     `output/code-scan.md`. If neither file exists or neither has a match, `Implementation-based`
-     with the test plan's scope area as the traced source.
+6. **Classify each test case for fast review**:
+   - **Origin**: `Existing-Suite` for the cases from step 2. For everything else, `Requirement-based`
+     if it traces to a CR/requirement ID in `output/requirements.md` for this run, otherwise
+     `Implementation-based` if it traces to a `file:line` business rule in `output/code-scan.md`.
+     If neither file exists or neither has a match, `Implementation-based` with the test plan's
+     scope area as the traced source.
    - **Category** (pick the single best-fit bucket — use the Positive/Negative/Edge design work
      above to decide, then classify what the case is really checking): `Functional` (happy-path
      positive cases), `Regression` (re-verifying previously-working behavior near this change),
@@ -68,20 +81,21 @@ and explicitly tell the user which run folder you read from.
      deterministic, likely-to-be-repeated cases (regression, core functional, boundary checks on
      a stable API/form); favor `No` for exploratory, one-off, or judgment-heavy cases (visual
      review, ambiguous UX, anything needing human interpretation of "does this look right").
-6. Group output by scope area, matching the test plan's structure, so a reviewer can cross-check
+7. Group output by scope area, matching the test plan's structure, so a reviewer can cross-check
    plan coverage against test cases directly.
-7. **CSV export**: write the test cases CSV (`test_cases_csv` path from config) alongside the
+8. **CSV export**: write the test cases CSV (`test_cases_csv` path from config) alongside the
    markdown, unconditionally — this is a standing deliverable every run, not optional. One row
    per test case, columns: `Run ID, Scope Area, TC ID, Title, Origin, Category, Automation
    Candidate, Priority, Traces To, Preconditions, Steps, Expected Result`. This file is meant for
    the user to manually import into Google Sheets (File > Import > Append to current sheet)
    whenever they want it there — you do not touch Google Sheets or any external tool yourself.
-8. **Update the RTM**: read `output/rtm.md` for this run IF it exists. For each test case whose
+9. **Update the RTM**: read `output/rtm.md` for this run IF it exists. For each test case whose
    Origin is `Requirement-based`, find that requirement's row and fill in `Test Case ID(s)`
    (append if the row already lists others) and set `Test Status` to "written, not yet executed."
    Never add a new row to the RTM here — rows originate only from requirements-analyzer;
-   implementation-based test cases with no requirement ID simply don't touch the RTM.
-9. **Coverage matrix**: tabulate exactly what you just wrote — a grid of Scope Area (rows) ×
+   implementation-based and existing-suite test cases with no requirement ID simply don't touch
+   the RTM.
+10. **Coverage matrix**: tabulate exactly what you just wrote — a grid of Scope Area (rows) ×
    Category (columns: Functional, Regression, Boundary, Negative, Security, Accessibility) with
    the count of test cases in each cell. This is a plain count of what's actually in
    `test-cases.csv`, not a fresh judgment call — re-derive it from the cases you wrote in this
@@ -102,6 +116,9 @@ and explicitly tell the user which run folder you read from.
   function/variable names, or internal implementation detail, even for Implementation-based
   cases traced from a code-scan.md rule.
 - These are manual test cases for now — do not generate automation code.
+- Never author an independent regression case for behavior already listed in `test-plan.md`'s
+  "Existing Regression/Sanity Coverage" for that scope area — reference the existing Case ID
+  (step 2) instead of duplicating it.
 - The coverage matrix is an arithmetic summary of what you wrote this run, not a new coverage
   assessment — never add a row/column count that doesn't trace to an actual test case in
   `test-cases.csv` from this same run.

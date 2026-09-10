@@ -8,7 +8,7 @@ commands:
       Run a sequence of QA pipeline stages in one go, invoking each stage's subagent in
       order. Stops automatically before test-cases if it was chained right after test-plan,
       since the test plan needs human review first.
-    argument_hint: "[stage stage ...]  e.g. context changelog code-scan requirements test-plan"
+    argument_hint: "[stage stage ...]  e.g. context regression-inventory changelog code-scan requirements test-plan"
 
   - id: push-bug
     description: >-

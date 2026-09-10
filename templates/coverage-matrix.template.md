@@ -1,6 +1,7 @@
 # Test Coverage Matrix — <release/version identifier>
 
-Derived from: `output/test-cases.csv` for this run (counts), cross-checked against
+Derived from: `output/test-cases.csv` for this run (counts — including Existing-Suite-origin
+rows, which count toward coverage the same as any other row), cross-checked against
 `output/test-plan.md`'s Test Scope per impacted area (gaps).
 
 ## Coverage by Scope Area × Category

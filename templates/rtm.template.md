@@ -1,8 +1,9 @@
 # Requirement Traceability Matrix — <release/version identifier>
 
-Seeded by: requirements-analyzer, from `output/requirements.md` and `output/code-scan.md`
-(if available) for this run. Updated in place by test-case-writer (Test Case ID(s), Test Status)
-and bug-reporter (Defect ID(s)) as the cycle progresses.
+Seeded by: requirements-analyzer, from the current `output/requirements.md` (refreshed in place
+across runs) and `output/code-scan.md` (if available) for this run. This RTM itself is per-run.
+Updated in place by test-case-writer (Test Case ID(s), Test Status) and bug-reporter
+(Defect ID(s)) as the cycle progresses.
 
 | Requirement ID | Source Ref | Implementation Ref | Test Case ID(s) | Test Status | Defect ID(s) |
 |---|---|---|---|---|---|

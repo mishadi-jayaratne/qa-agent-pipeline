@@ -603,6 +603,14 @@ async def api_output_tree(run_id: str | None = None):
     if (base / context_name).exists():
         entries.append({"path": context_name, "label": context_name})
 
+    regression_inventory_name = cfg["paths"].get("regression_inventory", "regression-inventory.md")
+    if (base / regression_inventory_name).exists():
+        entries.append({"path": regression_inventory_name, "label": regression_inventory_name})
+
+    regression_inventory_csv_name = cfg["paths"].get("regression_inventory_csv", "regression-inventory.csv")
+    if (base / regression_inventory_csv_name).exists():
+        entries.append({"path": regression_inventory_csv_name, "label": regression_inventory_csv_name})
+
     rd = runs_dir()
     available_runs = sorted(
         [p.name for p in rd.iterdir() if p.is_dir()] if rd.exists() else [],

@@ -26,6 +26,8 @@ and explicitly tell the user which run folder you read from.
   meaningful impact analysis; if missing, tell the user to run context-analyzer first.
 - `output/requirements.md`, for this run, IF it exists — optional. From requirements-analyzer.
 - `output/code-scan.md`, for this run, IF it exists — optional. From code-scanner.
+- `output/regression-inventory.md`, IF it exists — optional, not run-versioned (lives directly
+  under `output_dir`). From regression-inventory-analyzer.
 - Recent `git log`/`git diff` history and `<output_dir>/<runs_subdir>/*/bugs/` across past runs
   — for the defect-prone zone heuristic (see Process, step c).
 - `templates/test-plan.template.md` — the required output structure.
@@ -56,7 +58,16 @@ and explicitly tell the user which run folder you read from.
    any Blocker/Should-Fix findings into the risk rating of the specific impacted area they belong
    to (e.g. a Blocker in an already-in-scope module pushes that area's risk toward High). Never
    use code-scan findings to add a new scope area that isn't already driven by an actual change.
-9. **Defect-prone zone heuristic**: use `git log --stat` (or similar) over a recent window, and
+9. **Regression inventory cross-reference**: read `output/regression-inventory.md` IF it exists.
+   If it does, for each impacted area, find inventory rows whose Scope Area matches and list
+   their Case IDs in the "Existing Regression/Sanity Coverage" section — these are **mandatory
+   scope for this cycle**, not optional references; someone needs to actually execute them. For
+   any impacted area with zero matching rows, list it under "Regression Coverage Gaps" instead —
+   this means the area needs regression coverage but none exists yet. If `regression-inventory.md`
+   doesn't exist this cycle, write "Regression inventory cross-reference not performed this
+   cycle" in the coverage section and omit the gaps section entirely — do not guess at coverage
+   that wasn't inventoried.
+10. **Defect-prone zone heuristic**: use `git log --stat` (or similar) over a recent window, and
    historical bug frequency from `<output_dir>/<runs_subdir>/*/bugs/` across past runs, ONLY to:
    - reweight the risk of areas already in scope from actual changes in this release (never add
      scope for untouched code, however historically fragile it is), and
@@ -67,13 +78,13 @@ and explicitly tell the user which run folder you read from.
    **Guardrail:** if you find fewer than roughly 5 historical bugs for a module, or the churn
    window is very short, label the signal "inconclusive" and do not reweight risk on it — state
    this explicitly rather than silently skipping or silently reweighting on thin data.
-10. **CSV export**: write the test plan CSV (`test_plan_csv` path from config) alongside the
+11. **CSV export**: write the test plan CSV (`test_plan_csv` path from config) alongside the
     markdown, unconditionally — this is a standing deliverable every run, not optional. One row
     per impacted area, columns: `Run ID, Scope Area, Risk, Traces To, Test Scope, Status`. This
     file is meant for the user to manually import into Google Sheets (File > Import > Append to
     current sheet) whenever they want it there — you do not touch Google Sheets or any external
     tool yourself.
-11. **Clarification questions**: aggregate structured, sourced questions into the "Open
+12. **Clarification questions**: aggregate structured, sourced questions into the "Open
     Questions" table — never answer them, only surface them for the user to take to Product/Dev.
     Pull from three sources:
     - Your own impact analysis: anywhere you couldn't confirm impact or behavior with confidence
@@ -101,6 +112,9 @@ and explicitly tell the user which run folder you read from.
   actual change.
 - Never fabricate a risk rating, CR match, or fragile-zone flag without a traceable source
   (file:line, CR ID, commit, or a stated data count).
+- Never fabricate an "Existing Regression/Sanity Coverage" match — only list a Case ID that
+  actually appears in `regression-inventory.md` with a matching Scope Area. An impacted area
+  with no matching row is a gap, not something to force a match for.
 - Never answer a clarification question yourself or assume an answer — surface it for the user
   to take to Product/Dev, and write it in real-user-behavior language, not code terms.
 - Write scope summaries and impacted-area descriptions in real-user-behavior language — what a
