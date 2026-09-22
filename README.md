@@ -126,11 +126,21 @@ unavailable with no other error. Confirm `/mcp` shows `gitlab` as connected befo
 
 ## Configuration
 
-`config/pipeline.config.yaml` controls where agents write their output: `output_dir` (default
-`output`), `runs_subdir` (default `runs`), an optional `run_id`, plus the file/folder names
-under each run. Every agent reads this file before writing anything and falls back to the same
-defaults if it's missing, so deleting it is safe. Change `output_dir` if you want artifacts to
-land somewhere other than `./output`, e.g. inside an existing `docs/` or `qa/` folder.
+`config/pipeline.config.yaml` controls where agents write their output: `output_dir`, `runs_subdir`
+(default `runs`), an optional `run_id`, plus the file/folder names under each run. Every agent
+reads this file before writing anything and falls back to the same defaults if it's missing, so
+deleting it is safe. Change `output_dir` if you want artifacts to land somewhere other than the
+default below, e.g. inside an existing `docs/` or `qa/` folder.
+
+**Default `output_dir` (chat/CLI and dashboard agree).** If no `config/pipeline.config.yaml`
+exists for the target project, or it doesn't set `output_dir`, every agent — whether invoked from
+chat/CLI or the dashboard — defaults to a sibling directory next to the project root, named
+`<project-name>-qa-pipeline` (e.g. a project at `/path/to/foo` gets `/path/to/foo-qa-pipeline`),
+created on first use and reused after that. This keeps QA artifacts out of the target project's
+own repo tree by default, with no extra `.gitignore` entry needed. Setting `output_dir`
+explicitly in a project's own `config/pipeline.config.yaml` — e.g. back to a plain `output` folder
+nested in the project, as this repo's own config does for itself — always overrides the default,
+identically in chat/CLI and the dashboard.
 
 **Run-versioned output.** Every stage's output lives under
 `<output_dir>/<runs_subdir>/<run_id>/`, except `context.md`, which always lives directly at
@@ -194,7 +204,7 @@ from the source file at `prompts/commands/qa-pipeline.md`.
 | 2 | `changelog-analyzer` | changelog/commits/diff | `output/changes.md` |
 | 3 | `requirements-analyzer` *(optional)* | SRS/CR doc, `changes.md`, `code-scan.md`\* | `output/requirements.md`, `output/rtm.md`, `output/rtm.csv` |
 | 4 | `code-scanner` *(optional)* | changed code from `changes.md`, `context.md` | `output/code-scan.md` |
-| 5 | `test-planner` | `changes.md`, `context.md`, `requirements.md`\*, `code-scan.md`\*, `regression-inventory.md`\* | `output/test-plan.md`, `output/test-plan.csv` |
+| 5 | `test-planner` | `changes.md`, `context.md`, `requirements.md`\*, `code-scan.md`\*, `rtm.md`\*, `regression-inventory.md`\* | `output/test-plan.md`, `output/test-plan.csv` |
 | — | *(human review & sign-off on the test plan)* | | |
 | 6 | `test-case-writer` | `test-plan.md`, `regression-inventory.md`\* | `output/test-cases/*.md`, `output/test-cases.csv`, `output/coverage-matrix.md`, updates `output/rtm.md`\* |
 | 7 | `log-analyzer` | logs (ad hoc, during execution) | `output/log-analysis.md` |
@@ -245,6 +255,14 @@ runs after `requirements`, just re-run `requirements` for that run: it refreshes
 cross-reference columns and keeps the Test Case / Test Status / Defect columns that
 `test-case-writer` and `bug-reporter` already filled in. If no requirements document exists, no
 RTM is produced — same "say so plainly, don't fabricate" rule as `requirements.md` itself.
+
+**RTM staleness check.** `test-planner` reads `rtm.md` for this run (if present) and writes a
+"Data Freshness" section into `test-plan.md` stating whether it's up to date. If `rtm.md` was
+built before `code-scan.md` existed for this run — or against an older `code-scan.md` than the
+one now on disk — it's flagged **STALE**, with an instruction to re-run `requirements-analyzer`
+in cross-reference mode before trusting the plan's Open Questions. This surfaces staleness in the
+artifact you already review before sign-off, rather than relying on you to remember the re-run
+yourself.
 
 `log-analyzer` and `rca-analyst` aren't strictly linear — use them whenever you're investigating
 something, not only at a fixed point in the sequence.

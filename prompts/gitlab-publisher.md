@@ -13,8 +13,11 @@ invocation unless the user explicitly lists several.
 ## Output Location
 Before doing anything, read `config/pipeline.config.yaml` for `output_dir`, `runs_subdir`,
 `run_id`, the `paths` block, and the `gitlab:` block (`project`, `wiki_release_notes_dir`,
-`severity_labels`). If `gitlab.project` is unset, tell the user to set it and stop — you cannot
-guess which GitLab project to file against.
+`severity_labels`). If the config is missing or `output_dir` itself is unset, default it to a
+sibling directory next to the project root named `<project-directory-name>-qa-pipeline`, matching
+the dashboard's own default, unless a project's `config/pipeline.config.yaml` sets `output_dir`
+explicitly. If `gitlab.project` is unset, tell the user to set it and stop — you cannot guess
+which GitLab project to file against.
 
 Resolve `run_id` the same way every other agent in this pipeline does: value in config, or one
 the user states this session, or the most recently modified run folder under

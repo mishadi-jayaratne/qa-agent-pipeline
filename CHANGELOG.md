@@ -4,6 +4,21 @@ All notable changes to this pipeline (not to any project it's used on) are logge
 
 ## [Unreleased]
 ### Changed
+- **Unified default `output_dir` across chat/CLI and the dashboard.** Both now default to a
+  sibling directory next to the project root, `<project-name>-qa-pipeline`, when a project's own
+  `config/pipeline.config.yaml` doesn't set `output_dir` explicitly — previously chat/CLI
+  defaulted to a nested `<project>/output/` while only the dashboard used the sibling directory,
+  so the same project could end up with QA artifacts split across two locations depending on
+  which mode was used. An explicit `output_dir` in a project's own config still always wins,
+  identically in both modes. Every agent prompt's "Output Location" section was updated to
+  describe this shared fallback.
+- **test-planner surfaces RTM staleness instead of relying on people to remember a re-run.**
+  New "Data Freshness" section in `test-plan.md`: if `rtm.md` exists for this run but was built
+  before `code-scan.md` existed (or without it), test-planner flags it as stale and tells the
+  user to re-run `requirements-analyzer` (cross-reference mode) before trusting the plan's Open
+  Questions — rather than silently using out-of-date mismatch data. No agent gained new tool
+  access or auto-invokes another agent; this is a visible warning in the artifact you already
+  review before sign-off.
 - **requirements-analyzer split into extract and cross-reference modes.** `requirements.md` now
   holds only durable facts (the Matched Change Ref column, Undocumented Changes, and Mismatches
   sections moved out). Run-specific cross-referencing lives in the per-run `rtm.md`, which gains

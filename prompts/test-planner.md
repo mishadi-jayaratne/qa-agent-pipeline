@@ -4,8 +4,13 @@ before test case writing begins.
 
 ## Output Location
 Before writing anything, read `config/pipeline.config.yaml` for `output_dir`, `runs_subdir`, and
-`run_id`, plus the specific file/folder names under `paths` (falls back to `output/runs/` with
-the defaults shown in that file if the config is missing or a key is unset).
+`run_id`, plus the specific file/folder names under `paths` (if the config or `output_dir` is missing/unset, default `output_dir` to a sibling
+directory next to the project root named `<project-directory-name>-qa-pipeline` — e.g. a
+project at `/path/to/foo` defaults to `/path/to/foo-qa-pipeline` — creating it if needed; this
+matches the dashboard's own default so chat/CLI and the dashboard agree unless a project's
+`config/pipeline.config.yaml` sets `output_dir` explicitly, which always wins. `runs_subdir`
+and the file/folder names under `paths` still fall back to `runs` and the defaults shown in
+that config file.)
 
 Resolve `run_id` in this order: the value set in config, or a run/release identifier the user
 states for this session, or — if neither is given — today's date (`YYYY-MM-DD`). State which
@@ -26,6 +31,8 @@ and explicitly tell the user which run folder you read from.
   meaningful impact analysis; if missing, tell the user to run context-analyzer first.
 - `output/requirements.md`, for this run, IF it exists — optional. From requirements-analyzer.
 - `output/code-scan.md`, for this run, IF it exists — optional. From code-scanner.
+- `output/rtm.md`, for this run, IF it exists — optional. From requirements-analyzer's
+  cross-reference mode. Used for both Open Questions (step 12) and the staleness check (step 7b).
 - `output/regression-inventory.md`, IF it exists — optional, not run-versioned (lives directly
   under `output_dir`). From regression-inventory-analyzer.
 - Recent `git log`/`git diff` history and `<output_dir>/<runs_subdir>/*/bugs/` across past runs
@@ -58,6 +65,21 @@ and explicitly tell the user which run folder you read from.
    any Blocker/Should-Fix findings into the risk rating of the specific impacted area they belong
    to (e.g. a Blocker in an already-in-scope module pushes that area's risk toward High). Never
    use code-scan findings to add a new scope area that isn't already driven by an actual change.
+7b. **RTM staleness check**: read `output/rtm.md` for this run IF it exists, alongside
+    `output/code-scan.md` for this run. Populate the "Data Freshness" section with one of:
+    - `rtm.md` doesn't exist this run → "requirements-analyzer has not been run this cycle —
+      skip if no requirements doc applies, otherwise run it before relying on CR traceability."
+    - `rtm.md` exists and its `Code-scan:` header line says "not available" or similar, BUT
+      `code-scan.md` exists for this run → **STALE**: "`rtm.md`'s mismatch detection was built
+      without `code-scan.md`, which now exists for this run — re-run requirements-analyzer
+      (cross-reference mode) before treating this plan's Open Questions as complete."
+    - `rtm.md` exists and its `Code-scan:`/`Last cross-referenced` header names or dates a
+      `code-scan.md` older than the one now on disk (compare recorded date/ref to the current
+      file's content or `git log`/`stat` timestamp if needed) → **STALE**, same message.
+    - `rtm.md` exists and is current against `code-scan.md` (or neither `code-scan.md` nor a
+      requirements doc apply this cycle) → "up to date" or "not applicable this cycle."
+    Never silently proceed past a STALE case without surfacing it — it directly affects whether
+    step 12's rtm.md-sourced Open Questions are trustworthy.
 9. **Regression inventory cross-reference**: read `output/regression-inventory.md` IF it exists.
    If it does, for each impacted area, find inventory rows whose Scope Area matches and list
    their Case IDs in the "Existing Regression/Sanity Coverage" section — these are **mandatory
@@ -117,6 +139,8 @@ and explicitly tell the user which run folder you read from.
   with no matching row is a gap, not something to force a match for.
 - Never answer a clarification question yourself or assume an answer — surface it for the user
   to take to Product/Dev, and write it in real-user-behavior language, not code terms.
+- Never skip the "Data Freshness" section (step 7b) — a stale `rtm.md` silently undermines this
+  plan's Open Questions, so it must be surfaced even when everything else looks fine.
 - Write scope summaries and impacted-area descriptions in real-user-behavior language — what a
   user does or experiences — not code identifiers or internal implementation detail.
 - Do not modify any source file. You only write to `output/test-plan.md` and the test plan CSV.

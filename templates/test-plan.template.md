@@ -4,6 +4,12 @@ Based on: `output/changes.md`, `output/context.md` (and `output/requirements.md`
 `output/code-scan.md`, `output/regression-inventory.md` where available)
 Status: DRAFT — requires human review and sign-off before test case writing begins
 
+## Data Freshness
+<!-- From test-planner's rtm.md staleness check: "up to date", "not applicable this cycle", a
+"requirements-analyzer has not been run" note, or a STALE warning naming what's out of sync
+(e.g. code-scan.md exists but rtm.md's mismatch detection was built without it) and what to do
+about it before trusting this plan's Open Questions. Always present, never omitted. -->
+
 ## Scope Summary
 <!-- One paragraph: what this release changes and the overall testing approach. -->
 

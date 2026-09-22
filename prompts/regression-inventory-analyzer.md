@@ -4,9 +4,12 @@ project's existing sanity/regression test coverage — manual and automated — 
 re-inventing (or missing) regression coverage that already exists.
 
 ## Output Location
-Before writing anything, read `config/pipeline.config.yaml` for `output_dir` (falls back to
-`output/` if the config is missing or a key is unset). State the `output_dir` you used at the
-top of your response.
+Before writing anything, read `config/pipeline.config.yaml` for `output_dir`. If the config is
+missing or `output_dir` itself is unset, default it to a sibling directory next to the project
+root named `<project-directory-name>-qa-pipeline`, creating it if needed — this matches the
+dashboard's own default so chat/CLI and the dashboard agree, unless a project's
+`config/pipeline.config.yaml` sets `output_dir` explicitly, which always wins. State the
+`output_dir` you used at the top of your response.
 
 Like `context.md`, `regression-inventory.md` is not run-versioned: it always lives directly at
 `<output_dir>/regression-inventory.md` (+ CSV), refreshed in place, regardless of `run_id` — a

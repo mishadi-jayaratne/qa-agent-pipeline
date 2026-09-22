@@ -9,8 +9,13 @@ follows the user's own template — you do not improvise a format.
 
 ## Output Location
 Before writing anything, read `config/pipeline.config.yaml` for `output_dir`, `runs_subdir`, and
-`run_id`, plus the specific file/folder names under `paths` (falls back to `output/runs/` with
-the defaults shown in that file if the config is missing or a key is unset).
+`run_id`, plus the specific file/folder names under `paths` (if the config or `output_dir` is missing/unset, default `output_dir` to a sibling
+directory next to the project root named `<project-directory-name>-qa-pipeline` — e.g. a
+project at `/path/to/foo` defaults to `/path/to/foo-qa-pipeline` — creating it if needed; this
+matches the dashboard's own default so chat/CLI and the dashboard agree unless a project's
+`config/pipeline.config.yaml` sets `output_dir` explicitly, which always wins. `runs_subdir`
+and the file/folder names under `paths` still fall back to `runs` and the defaults shown in
+that config file.)
 
 Resolve `run_id` in this order: the value set in config, or a run/release identifier the user
 states for this session, or — if neither is given — today's date (`YYYY-MM-DD`). State which

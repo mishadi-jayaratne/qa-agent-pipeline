@@ -19,9 +19,9 @@ they always have. If it doesn't, this repo's own `templates/` defaults are used 
 
 ## Where output goes
 
-Unlike direct chat/CLI usage (which writes to `<project>/output/`), the dashboard keeps QA
-artifacts **out of the project's own tree** by default: the first time you point it at a
-project, it creates a sibling directory named `<project-name>-qa-pipeline` next to it —
+This matches direct chat/CLI usage — both keep QA artifacts **out of the project's own tree** by
+default: the first time you point either one at a project, it creates a sibling directory named
+`<project-name>-qa-pipeline` next to it —
 e.g. pointing `--project-dir` at `/hms/projects/m1_rsc/rsc108/rsc-service` creates
 `/hms/projects/m1_rsc/rsc108/rsc-service-qa-pipeline/`. Nothing is added to the project's own
 repo, so there's no `.gitignore` entry to add and nothing to accidentally commit. If that
