@@ -95,12 +95,12 @@ and explicitly tell the user which run folder you read from.
     Pull from three sources:
     - Your own impact analysis: anywhere you couldn't confirm impact or behavior with confidence
       (cite the specific area or file).
-    - `output/requirements.md`'s "Implementation vs. Documentation Mismatches" section, if that
+    - `output/rtm.md`'s "Implementation vs. Documentation Mismatches" section, if that
       file exists for this run (cite the requirement ID and/or file:line).
     - `output/code-scan.md`'s discovered business rules that read as ambiguous or clearly
       undocumented, if that file exists for this run (cite the file:line).
     Every question needs a concrete source citation — no generic or speculative questions. When a
-    question is pulled from `requirements.md` or `code-scan.md`, quote that source's own wording
+    question is pulled from `rtm.md` or `code-scan.md`, quote that source's own wording
     verbatim (with its citation) rather than restating the finding in your own words — an
     independent paraphrase drifts out of sync with the source on a future edit; a verbatim quote
     can't. If none of the three source files surfaced anything, leave the table empty rather than

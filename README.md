@@ -236,14 +236,15 @@ referenced), and flags impacted areas with none as "Regression Coverage Gaps." `
 then references those existing Case IDs (`Origin: Existing-Suite`) instead of re-authoring
 equivalent regression cases from scratch.
 
-**Requirement Traceability Matrix (RTM).** `requirements-analyzer` seeds `output/rtm.md` +
-`rtm.csv` (Requirement ID → Source Ref → Implementation Ref → Test Case ID(s) → Test Status →
-Defect ID(s)) whenever it has a requirements document to extract from. `Implementation Ref` is
-filled in from `code-scan.md`'s discovered business rules if that stage has already run this
-cycle — run `code-scan` before `requirements` for a fuller RTM, though running `requirements`
-first still works (that column just stays "pending"). `test-case-writer` and `bug-reporter` fill
-in the remaining columns as the cycle progresses. If no requirements document exists, no RTM is
-produced — same "say so plainly, don't fabricate" rule as `requirements.md` itself.
+**Requirement Traceability Matrix (RTM).** `requirements.md` is global and holds only durable
+facts (ID, description, acceptance criteria, source, status). Everything run-specific — matched
+change, implementation ref, undocumented changes, code-vs-doc mismatches — lives in the per-run
+`output/rtm.md` + `rtm.csv`, built by `requirements-analyzer` in a repeatable
+**cross-reference mode** that never touches `requirements.md`. If `code-scan` (or `changelog`)
+runs after `requirements`, just re-run `requirements` for that run: it refreshes the RTM's
+cross-reference columns and keeps the Test Case / Test Status / Defect columns that
+`test-case-writer` and `bug-reporter` already filled in. If no requirements document exists, no
+RTM is produced — same "say so plainly, don't fabricate" rule as `requirements.md` itself.
 
 `log-analyzer` and `rca-analyst` aren't strictly linear — use them whenever you're investigating
 something, not only at a fixed point in the sequence.

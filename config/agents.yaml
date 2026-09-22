@@ -60,10 +60,12 @@ agents:
       their CR/requirement ID from an SRS or CR document, reconciling them into a
       persistent, refreshed-in-place requirements.md (like context.md) that
       accumulates and updates across every source document seen over time rather
-      than a per-run snapshot. Cross-references against changes.md, and flags
-      mismatches against code-scan.md's discovered business rules if that stage
-      has run. Seeds this run's Requirement Traceability Matrix (rtm.md/rtm.csv)
-      from the current requirements.md. Use when a requirements/CR document is
+      than a per-run snapshot, holding only durable facts. Cross-references
+      against changes.md and code-scan.md into this run's Requirement
+      Traceability Matrix (rtm.md/rtm.csv) — matched changes, implementation
+      refs, undocumented changes, and mismatches — in a repeatable
+      cross-reference-only mode that never touches requirements.md and
+      preserves test/defect columns. Use when a requirements/CR document is
       available for this release; skips itself plainly if not.
     tools: [read, grep, glob, write]
 

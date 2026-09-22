@@ -3,6 +3,14 @@
 All notable changes to this pipeline (not to any project it's used on) are logged here.
 
 ## [Unreleased]
+### Changed
+- **requirements-analyzer split into extract and cross-reference modes.** `requirements.md` now
+  holds only durable facts (the Matched Change Ref column, Undocumented Changes, and Mismatches
+  sections moved out). Run-specific cross-referencing lives in the per-run `rtm.md`, which gains
+  a `Matched Change Ref` column plus Undocumented Changes and Mismatches sections. Re-running
+  after `code-scan`/`changelog` rebuilds the RTM only, and preserves Test Case / Test Status /
+  Defect columns filled in by later stages.
+
 ### Removed
 - OpenCode support. The pipeline now generates and targets Claude Code only — `.opencode/` is
   gone, `scripts/generate_agents.py` no longer writes OpenCode agent/command files, and

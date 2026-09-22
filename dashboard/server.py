@@ -603,6 +603,10 @@ async def api_output_tree(run_id: str | None = None):
     if (base / context_name).exists():
         entries.append({"path": context_name, "label": context_name})
 
+    requirements_name = cfg["paths"].get("requirements", "requirements.md")
+    if (base / requirements_name).exists():
+        entries.append({"path": requirements_name, "label": requirements_name})
+
     regression_inventory_name = cfg["paths"].get("regression_inventory", "regression-inventory.md")
     if (base / regression_inventory_name).exists():
         entries.append({"path": regression_inventory_name, "label": regression_inventory_name})
